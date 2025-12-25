@@ -6,7 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 
-type TabType = 'home' | 'giveaways' | 'profile' | 'shop';
+type TabType = 'home' | 'giveaways' | 'earn' | 'profile' | 'shop';
 
 interface Giveaway {
   id: number;
@@ -35,6 +35,18 @@ interface LeaderboardPlayer {
   avatar: string;
 }
 
+interface Task {
+  id: number;
+  title: string;
+  description: string;
+  reward: number;
+  icon: string;
+  type: 'daily' | 'bonus' | 'achievement';
+  progress?: number;
+  maxProgress?: number;
+  completed: boolean;
+}
+
 const Snowflake = ({ style }: { style: React.CSSProperties }) => {
   return <div className="snowflake" style={style}>❄</div>;
 };
@@ -45,6 +57,16 @@ const Index = () => {
   const [userLevel, setUserLevel] = useState(7);
   const [userWins, setUserWins] = useState(24);
   const [snowflakes, setSnowflakes] = useState<React.CSSProperties[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([
+    { id: 1, title: '🎄 Ежедневный вход', description: 'Заходи каждый день и получай награды', reward: 100, icon: 'Calendar', type: 'daily', completed: false },
+    { id: 2, title: '⭐ Участвуй в 3 розыгрышах', description: 'Попробуй удачу в новогодних розыгрышах', reward: 250, icon: 'Gift', type: 'daily', progress: 1, maxProgress: 3, completed: false },
+    { id: 3, title: '🎮 Сыграй 5 игр', description: 'Играй и зарабатывай монеты', reward: 200, icon: 'Gamepad2', type: 'daily', progress: 3, maxProgress: 5, completed: false },
+    { id: 4, title: '🎅 Пригласи друга', description: 'Получи бонус за каждого приглашенного друга', reward: 500, icon: 'Users', type: 'bonus', completed: false },
+    { id: 5, title: '💎 Купи предмет в магазине', description: 'Соверши первую покупку', reward: 300, icon: 'ShoppingCart', type: 'bonus', completed: false },
+    { id: 6, title: '🏆 Выиграй 10 раз', description: 'Стань чемпионом', reward: 1000, icon: 'Trophy', type: 'achievement', progress: 24, maxProgress: 100, completed: false },
+    { id: 7, title: '⚡ Новогодняя серия', description: 'Войди в систему 7 дней подряд', reward: 750, icon: 'Zap', type: 'achievement', progress: 4, maxProgress: 7, completed: false },
+    { id: 8, title: '👑 Достигни уровня 10', description: 'Повышай свой уровень', reward: 2000, icon: 'Crown', type: 'achievement', progress: 7, maxProgress: 10, completed: false },
+  ]);
 
   useEffect(() => {
     const flakes = Array.from({ length: 30 }, (_, i) => ({
@@ -94,6 +116,14 @@ const Index = () => {
     }
   };
 
+  const completeTask = (taskId: number) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (task && !task.completed) {
+      setUserCoins(userCoins + task.reward);
+      setTasks(tasks.map(t => t.id === taskId ? { ...t, completed: true } : t));
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 relative overflow-hidden">
       {snowflakes.map((style, i) => (
@@ -122,7 +152,7 @@ const Index = () => {
         </header>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabType)} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-card/50 backdrop-blur-sm border-2 border-secondary/30">
+          <TabsList className="grid w-full grid-cols-5 bg-card/50 backdrop-blur-sm border-2 border-secondary/30">
             <TabsTrigger value="home" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
               <Icon name="Home" size={20} className="mr-2" />
               Главная
@@ -130,6 +160,10 @@ const Index = () => {
             <TabsTrigger value="giveaways" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
               <Icon name="Gift" size={20} className="mr-2" />
               Розыгрыши
+            </TabsTrigger>
+            <TabsTrigger value="earn" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+              <Icon name="Coins" size={20} className="mr-2" />
+              Заработок
             </TabsTrigger>
             <TabsTrigger value="profile" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
               <Icon name="User" size={20} className="mr-2" />
@@ -284,6 +318,172 @@ const Index = () => {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="earn" className="space-y-6 animate-scale-in">
+            <Card className="border-2 border-yellow-500/50 bg-gradient-to-br from-yellow-600/10 to-orange-600/10">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-2xl">
+                  <span className="text-4xl">🎁</span>
+                  Зарабатывай монеты каждый день!
+                </CardTitle>
+                <p className="text-muted-foreground mt-2">Выполняй задания и получай новогодние награды</p>
+              </CardHeader>
+            </Card>
+
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <span className="text-2xl">📅</span> Ежедневные задания
+                </h3>
+                <div className="grid gap-4">
+                  {tasks.filter(t => t.type === 'daily').map((task) => (
+                    <Card key={task.id} className={`border-2 transition-all ${
+                      task.completed 
+                        ? 'border-green-500/50 bg-green-600/10 opacity-75' 
+                        : 'border-primary/50 hover:shadow-lg hover:shadow-primary/20'
+                    }`}>
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-start gap-4 flex-1">
+                            <div className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl ${
+                              task.completed
+                                ? 'bg-green-600/30'
+                                : 'bg-gradient-to-br from-red-600/30 to-green-600/30'
+                            }`}>
+                              <Icon name={task.icon as any} size={28} />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-bold text-lg mb-1">{task.title}</h4>
+                              <p className="text-sm text-muted-foreground mb-3">{task.description}</p>
+                              {task.maxProgress && (
+                                <div className="space-y-1">
+                                  <Progress value={(task.progress! / task.maxProgress) * 100} className="h-2" />
+                                  <p className="text-xs text-muted-foreground">{task.progress}/{task.maxProgress}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-3">
+                            <div className="flex items-center gap-2 text-xl font-bold text-yellow-400">
+                              <span className="text-2xl">🪙</span>
+                              +{task.reward}
+                            </div>
+                            {task.completed ? (
+                              <Badge className="bg-green-600 text-white">✓ Выполнено</Badge>
+                            ) : (
+                              <Button
+                                onClick={() => completeTask(task.id)}
+                                disabled={task.maxProgress ? task.progress! < task.maxProgress : false}
+                                className="bg-primary hover:bg-primary/80 font-bold"
+                              >
+                                Забрать
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <span className="text-2xl">🎁</span> Бонусные задания
+                </h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {tasks.filter(t => t.type === 'bonus').map((task) => (
+                    <Card key={task.id} className={`border-2 transition-all ${
+                      task.completed 
+                        ? 'border-green-500/50 bg-green-600/10 opacity-75' 
+                        : 'border-secondary/50 hover:shadow-lg hover:shadow-secondary/20'
+                    }`}>
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl ${
+                              task.completed
+                                ? 'bg-green-600/30'
+                                : 'bg-gradient-to-br from-blue-600/30 to-purple-600/30'
+                            }`}>
+                              <Icon name={task.icon as any} size={24} />
+                            </div>
+                            <CardTitle className="text-lg">{task.title}</CardTitle>
+                          </div>
+                          {task.completed && <Badge className="bg-green-600 text-white">✓</Badge>}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <p className="text-sm text-muted-foreground">{task.description}</p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-lg font-bold text-yellow-400">
+                            <span className="text-2xl">🪙</span>
+                            +{task.reward}
+                          </div>
+                          {!task.completed && (
+                            <Button
+                              onClick={() => completeTask(task.id)}
+                              className="bg-secondary hover:bg-secondary/80 font-bold"
+                            >
+                              Выполнить
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <span className="text-2xl">🏆</span> Достижения
+                </h3>
+                <div className="grid gap-4">
+                  {tasks.filter(t => t.type === 'achievement').map((task) => (
+                    <Card key={task.id} className={`border-2 transition-all ${
+                      task.completed 
+                        ? 'border-green-500/50 bg-green-600/10 opacity-75' 
+                        : 'border-yellow-500/50 hover:shadow-lg hover:shadow-yellow-500/20'
+                    }`}>
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-start gap-4 flex-1">
+                            <div className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl ${
+                              task.completed
+                                ? 'bg-green-600/30'
+                                : 'bg-gradient-to-br from-yellow-600/30 to-orange-600/30'
+                            }`}>
+                              <Icon name={task.icon as any} size={28} />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-bold text-lg mb-1">{task.title}</h4>
+                              <p className="text-sm text-muted-foreground mb-3">{task.description}</p>
+                              {task.maxProgress && (
+                                <div className="space-y-1">
+                                  <Progress value={(task.progress! / task.maxProgress) * 100} className="h-2" />
+                                  <p className="text-xs text-muted-foreground">{task.progress}/{task.maxProgress}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-3">
+                            <div className="flex items-center gap-2 text-xl font-bold text-yellow-400">
+                              <span className="text-2xl">🪙</span>
+                              +{task.reward}
+                            </div>
+                            {task.completed && (
+                              <Badge className="bg-green-600 text-white text-sm">✓ Получено</Badge>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
             </div>
           </TabsContent>
 
