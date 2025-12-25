@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
+import { useToast } from '@/hooks/use-toast';
 
 type TabType = 'home' | 'giveaways' | 'earn' | 'profile' | 'shop';
 
@@ -42,6 +43,7 @@ interface Task {
   reward: number;
   icon: string;
   type: 'daily' | 'bonus' | 'achievement';
+  taskType: 'login' | 'giveaway' | 'play' | 'invite' | 'shop' | 'win' | 'streak' | 'level';
   progress?: number;
   maxProgress?: number;
   completed: boolean;
@@ -52,20 +54,26 @@ const Snowflake = ({ style }: { style: React.CSSProperties }) => {
 };
 
 const Index = () => {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [userCoins, setUserCoins] = useState(12500);
   const [userLevel, setUserLevel] = useState(7);
+  const [userXP, setUserXP] = useState(2340);
   const [userWins, setUserWins] = useState(24);
+  const [gamesPlayed, setGamesPlayed] = useState(127);
+  const [giveawayJoins, setGiveawayJoins] = useState(0);
+  const [shopPurchases, setShopPurchases] = useState(0);
+  const [loginStreak, setLoginStreak] = useState(4);
   const [snowflakes, setSnowflakes] = useState<React.CSSProperties[]>([]);
   const [tasks, setTasks] = useState<Task[]>([
-    { id: 1, title: '🎄 Ежедневный вход', description: 'Заходи каждый день и получай награды', reward: 100, icon: 'Calendar', type: 'daily', completed: false },
-    { id: 2, title: '⭐ Участвуй в 3 розыгрышах', description: 'Попробуй удачу в новогодних розыгрышах', reward: 250, icon: 'Gift', type: 'daily', progress: 1, maxProgress: 3, completed: false },
-    { id: 3, title: '🎮 Сыграй 5 игр', description: 'Играй и зарабатывай монеты', reward: 200, icon: 'Gamepad2', type: 'daily', progress: 3, maxProgress: 5, completed: false },
-    { id: 4, title: '🎅 Пригласи друга', description: 'Получи бонус за каждого приглашенного друга', reward: 500, icon: 'Users', type: 'bonus', completed: false },
-    { id: 5, title: '💎 Купи предмет в магазине', description: 'Соверши первую покупку', reward: 300, icon: 'ShoppingCart', type: 'bonus', completed: false },
-    { id: 6, title: '🏆 Выиграй 10 раз', description: 'Стань чемпионом', reward: 1000, icon: 'Trophy', type: 'achievement', progress: 24, maxProgress: 100, completed: false },
-    { id: 7, title: '⚡ Новогодняя серия', description: 'Войди в систему 7 дней подряд', reward: 750, icon: 'Zap', type: 'achievement', progress: 4, maxProgress: 7, completed: false },
-    { id: 8, title: '👑 Достигни уровня 10', description: 'Повышай свой уровень', reward: 2000, icon: 'Crown', type: 'achievement', progress: 7, maxProgress: 10, completed: false },
+    { id: 1, title: '🎄 Ежедневный вход', description: 'Заходи каждый день и получай награды', reward: 100, icon: 'Calendar', type: 'daily', taskType: 'login', completed: false },
+    { id: 2, title: '⭐ Участвуй в 3 розыгрышах', description: 'Попробуй удачу в новогодних розыгрышах', reward: 250, icon: 'Gift', type: 'daily', taskType: 'giveaway', progress: 0, maxProgress: 3, completed: false },
+    { id: 3, title: '🎮 Сыграй 5 игр', description: 'Играй и зарабатывай монеты', reward: 200, icon: 'Gamepad2', type: 'daily', taskType: 'play', progress: 0, maxProgress: 5, completed: false },
+    { id: 4, title: '🎅 Пригласи друга', description: 'Получи бонус за каждого приглашенного друга', reward: 500, icon: 'Users', type: 'bonus', taskType: 'invite', completed: false },
+    { id: 5, title: '💎 Купи предмет в магазине', description: 'Соверши первую покупку', reward: 300, icon: 'ShoppingCart', type: 'bonus', taskType: 'shop', completed: false },
+    { id: 6, title: '🏆 Выиграй 100 раз', description: 'Стань чемпионом', reward: 1000, icon: 'Trophy', type: 'achievement', taskType: 'win', progress: 24, maxProgress: 100, completed: false },
+    { id: 7, title: '⚡ Новогодняя серия', description: 'Войди в систему 7 дней подряд', reward: 750, icon: 'Zap', type: 'achievement', taskType: 'streak', progress: 4, maxProgress: 7, completed: false },
+    { id: 8, title: '👑 Достигни уровня 10', description: 'Повышай свой уровень', reward: 2000, icon: 'Crown', type: 'achievement', taskType: 'level', progress: 7, maxProgress: 10, completed: false },
   ]);
 
   useEffect(() => {
@@ -77,6 +85,52 @@ const Index = () => {
     }));
     setSnowflakes(flakes);
   }, []);
+
+  useEffect(() => {
+    updateTaskProgress('giveaway', giveawayJoins);
+  }, [giveawayJoins]);
+
+  useEffect(() => {
+    updateTaskProgress('shop', shopPurchases);
+  }, [shopPurchases]);
+
+  useEffect(() => {
+    updateTaskProgress('win', userWins);
+  }, [userWins]);
+
+  useEffect(() => {
+    updateTaskProgress('level', userLevel);
+  }, [userLevel]);
+
+  useEffect(() => {
+    updateTaskProgress('streak', loginStreak);
+  }, [loginStreak]);
+
+  useEffect(() => {
+    if (userXP >= 3600) {
+      setUserLevel(userLevel + 1);
+      setUserXP(userXP - 3600);
+      toast({
+        title: '🎉 Новый уровень!',
+        description: `Поздравляем! Вы достигли уровня ${userLevel + 1}!`,
+      });
+    }
+  }, [userXP]);
+
+  const updateTaskProgress = (taskType: string, currentValue: number) => {
+    setTasks(prevTasks => prevTasks.map(task => {
+      if (task.taskType === taskType && task.maxProgress) {
+        const newProgress = Math.min(currentValue, task.maxProgress);
+        const isNowComplete = newProgress >= task.maxProgress && !task.completed;
+        return { 
+          ...task, 
+          progress: newProgress,
+          completed: isNowComplete || task.completed
+        };
+      }
+      return task;
+    }));
+  };
 
   const giveaways: Giveaway[] = [
     { id: 1, title: '🎄 Новогодний Мега-Приз', prize: '10,000 монет', cost: 100, participants: 87, maxParticipants: 100, endTime: '2ч 15м', status: 'active' },
@@ -98,31 +152,99 @@ const Index = () => {
     { id: 4, name: 'ЗвездаНовогода', wins: 115, coins: 35600, avatar: '⭐' },
     { id: 5, name: 'СчастливыйСнеговик', wins: 98, coins: 29800, avatar: '⛄' },
     { id: 6, name: 'РождествоПро', wins: 87, coins: 26500, avatar: '🎁' },
-    { id: 7, name: 'ПроГеймер2025', wins: 76, coins: 23400, avatar: '🎮' },
+    { id: 7, name: 'НовогоднийПро_2025', wins: userWins, coins: userCoins, avatar: '🎮' },
     { id: 8, name: 'ОгненныйДракон', wins: 65, coins: 19800, avatar: '🐉' },
     { id: 9, name: 'МагияЗимы', wins: 54, coins: 16200, avatar: '✨' },
     { id: 10, name: 'НовогоднийГром', wins: 43, coins: 13100, avatar: '⚡' },
   ];
 
-  const joinGiveaway = (cost: number) => {
+  const joinGiveaway = (cost: number, giveawayId: number) => {
     if (userCoins >= cost) {
       setUserCoins(userCoins - cost);
+      setGiveawayJoins(giveawayJoins + 1);
+      
+      const isWin = Math.random() < 0.3;
+      
+      setTimeout(() => {
+        if (isWin) {
+          const winAmount = Math.floor(Math.random() * 500) + 200;
+          setUserCoins(prev => prev + winAmount);
+          setUserWins(userWins + 1);
+          setUserXP(prev => prev + 150);
+          toast({
+            title: '🎉 Победа!',
+            description: `Вы выиграли ${winAmount} монет!`,
+          });
+        } else {
+          toast({
+            title: '😔 Не повезло',
+            description: 'Попробуйте еще раз! Удача на вашей стороне!',
+          });
+        }
+        setGamesPlayed(prev => prev + 1);
+      }, 1500);
+    } else {
+      toast({
+        title: '❌ Недостаточно монет',
+        description: `Нужно еще ${cost - userCoins} монет`,
+        variant: 'destructive',
+      });
     }
   };
 
-  const buyItem = (cost: number) => {
+  const buyItem = (cost: number, itemName: string) => {
     if (userCoins >= cost) {
       setUserCoins(userCoins - cost);
+      setShopPurchases(shopPurchases + 1);
+      setUserXP(prev => prev + 50);
+      toast({
+        title: '✅ Покупка совершена!',
+        description: `Вы приобрели: ${itemName}`,
+      });
+    } else {
+      toast({
+        title: '❌ Недостаточно монет',
+        description: `Нужно еще ${cost - userCoins} монет`,
+        variant: 'destructive',
+      });
     }
   };
 
   const completeTask = (taskId: number) => {
     const task = tasks.find(t => t.id === taskId);
-    if (task && !task.completed) {
+    if (!task) return;
+
+    if (task.taskType === 'login' && !task.completed) {
       setUserCoins(userCoins + task.reward);
+      setUserXP(prev => prev + 100);
       setTasks(tasks.map(t => t.id === taskId ? { ...t, completed: true } : t));
+      toast({
+        title: '🎁 Награда получена!',
+        description: `+${task.reward} монет за ежедневный вход!`,
+      });
+    }
+
+    if (task.taskType === 'invite') {
+      toast({
+        title: '👥 Пригласи друзей',
+        description: 'Функция приглашения появится в следующем обновлении!',
+      });
+    }
+
+    if (task.maxProgress && task.progress! >= task.maxProgress && !task.completed) {
+      setUserCoins(userCoins + task.reward);
+      setUserXP(prev => prev + 200);
+      setTasks(tasks.map(t => t.id === taskId ? { ...t, completed: true } : t));
+      toast({
+        title: '🏆 Задание выполнено!',
+        description: `+${task.reward} монет!`,
+      });
     }
   };
+
+  const xpToNextLevel = 3600;
+  const xpProgress = (userXP / xpToNextLevel) * 100;
+  const currentRank = leaderboard.findIndex(p => p.name === 'НовогоднийПро_2025') + 1;
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 relative overflow-hidden">
@@ -177,7 +299,7 @@ const Index = () => {
 
           <TabsContent value="home" className="space-y-6 animate-scale-in">
             <div className="grid md:grid-cols-3 gap-4">
-              <Card className="bg-gradient-to-br from-red-600/20 to-green-600/20 border-2 border-primary/50 hover:scale-105 transition-transform">
+              <Card className="bg-gradient-to-br from-red-600/20 to-green-600/20 border-2 border-primary/50 hover:scale-105 transition-transform cursor-pointer">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <span className="text-3xl">🏆</span>
@@ -190,7 +312,7 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-blue-600/20 to-cyan-600/20 border-2 border-accent/50 hover:scale-105 transition-transform">
+              <Card className="bg-gradient-to-br from-blue-600/20 to-cyan-600/20 border-2 border-accent/50 hover:scale-105 transition-transform cursor-pointer">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <span className="text-3xl">⭐</span>
@@ -199,12 +321,12 @@ const Index = () => {
                 </CardHeader>
                 <CardContent>
                   <p className="text-4xl font-bold text-accent">{userLevel}</p>
-                  <Progress value={65} className="mt-3 bg-muted" />
-                  <p className="text-sm text-muted-foreground mt-2">65% до уровня {userLevel + 1}</p>
+                  <Progress value={xpProgress} className="mt-3 bg-muted" />
+                  <p className="text-sm text-muted-foreground mt-2">{Math.floor(xpProgress)}% до уровня {userLevel + 1}</p>
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-br from-green-600/20 to-yellow-600/20 border-2 border-secondary/50 hover:scale-105 transition-transform">
+              <Card className="bg-gradient-to-br from-green-600/20 to-yellow-600/20 border-2 border-secondary/50 hover:scale-105 transition-transform cursor-pointer">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <span className="text-3xl">🎄</span>
@@ -212,7 +334,7 @@ const Index = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-4xl font-bold text-secondary">#7</p>
+                  <p className="text-4xl font-bold text-secondary">#{currentRank}</p>
                   <p className="text-sm text-muted-foreground mt-2">В топе праздничных игроков</p>
                 </CardContent>
               </Card>
@@ -227,11 +349,13 @@ const Index = () => {
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="space-y-3">
-                  {leaderboard.map((player, index) => (
+                  {leaderboard.sort((a, b) => b.wins - a.wins).slice(0, 10).map((player, index) => (
                     <div
                       key={player.id}
                       className={`flex items-center justify-between p-4 rounded-lg transition-all hover:scale-[1.02] ${
-                        index < 3
+                        player.name === 'НовогоднийПро_2025'
+                          ? 'bg-gradient-to-r from-blue-600/30 to-purple-600/30 border-2 border-blue-500/70 shadow-xl'
+                          : index < 3
                           ? 'bg-gradient-to-r from-yellow-600/30 to-orange-600/30 border-2 border-yellow-500/50 shadow-lg'
                           : 'bg-card/70 border border-border/30'
                       }`}
@@ -307,7 +431,7 @@ const Index = () => {
                           <span className="text-sm font-semibold">⏱️ {giveaway.endTime}</span>
                         </div>
                         <Button
-                          onClick={() => joinGiveaway(giveaway.cost)}
+                          onClick={() => joinGiveaway(giveaway.cost, giveaway.id)}
                           disabled={userCoins < giveaway.cost}
                           className="bg-primary hover:bg-primary/80 neon-glow font-bold"
                         >
@@ -474,9 +598,16 @@ const Index = () => {
                               <span className="text-2xl">🪙</span>
                               +{task.reward}
                             </div>
-                            {task.completed && (
+                            {task.completed ? (
                               <Badge className="bg-green-600 text-white text-sm">✓ Получено</Badge>
-                            )}
+                            ) : task.maxProgress && task.progress! >= task.maxProgress ? (
+                              <Button
+                                onClick={() => completeTask(task.id)}
+                                className="bg-yellow-500 hover:bg-yellow-600 font-bold"
+                              >
+                                Забрать
+                              </Button>
+                            ) : null}
                           </div>
                         </div>
                       </CardContent>
@@ -509,7 +640,7 @@ const Index = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between p-3 bg-muted/30 rounded-lg border border-border/30">
                         <span className="text-muted-foreground">Всего игр:</span>
-                        <span className="font-bold text-lg">127</span>
+                        <span className="font-bold text-lg">{gamesPlayed}</span>
                       </div>
                       <div className="flex justify-between p-3 bg-gradient-to-r from-green-600/20 to-green-600/10 rounded-lg border border-secondary/30">
                         <span className="text-muted-foreground">Выиграно:</span>
@@ -517,11 +648,11 @@ const Index = () => {
                       </div>
                       <div className="flex justify-between p-3 bg-muted/30 rounded-lg border border-border/30">
                         <span className="text-muted-foreground">Процент побед:</span>
-                        <span className="font-bold text-primary text-lg">18.9%</span>
+                        <span className="font-bold text-primary text-lg">{gamesPlayed > 0 ? ((userWins / gamesPlayed) * 100).toFixed(1) : 0}%</span>
                       </div>
                       <div className="flex justify-between p-3 bg-gradient-to-r from-yellow-600/20 to-yellow-600/10 rounded-lg border border-yellow-500/30">
-                        <span className="text-muted-foreground">Всего заработано:</span>
-                        <span className="font-bold text-yellow-400 text-lg">🪙 47,320</span>
+                        <span className="text-muted-foreground">Баланс:</span>
+                        <span className="font-bold text-yellow-400 text-lg">🪙 {userCoins.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
@@ -552,9 +683,9 @@ const Index = () => {
                       <span className="text-primary">🎄 Уровень {userLevel}</span>
                       <span className="text-secondary">🎁 Уровень {userLevel + 1}</span>
                     </div>
-                    <Progress value={65} className="h-4 border border-secondary/30" />
+                    <Progress value={xpProgress} className="h-4 border border-secondary/30" />
                     <p className="text-sm text-muted-foreground flex items-center gap-2">
-                      <span className="text-lg">⭐</span> 2,340 / 3,600 XP
+                      <span className="text-lg">⭐</span> {userXP.toLocaleString()} / {xpToNextLevel.toLocaleString()} XP
                     </p>
                   </div>
                 </div>
@@ -582,7 +713,7 @@ const Index = () => {
                         {item.cost.toLocaleString()}
                       </div>
                       <Button
-                        onClick={() => buyItem(item.cost)}
+                        onClick={() => buyItem(item.cost, item.name)}
                         disabled={userCoins < item.cost}
                         className="bg-secondary hover:bg-secondary/80 neon-glow-pink font-bold text-base px-6"
                       >
