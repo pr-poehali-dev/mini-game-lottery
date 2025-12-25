@@ -6,41 +6,41 @@
 
 @layer base {
   :root {
-    --background: 222 47% 11%;
+    --background: 210 20% 12%;
     --foreground: 210 40% 98%;
 
-    --card: 217 33% 17%;
+    --card: 210 25% 18%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 217 33% 17%;
+    --popover: 210 25% 18%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 262 83% 58%;
+    --primary: 348 83% 58%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 328 86% 70%;
+    --secondary: 142 70% 45%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217 33% 25%;
+    --muted: 210 25% 25%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 199 89% 48%;
+    --accent: 198 88% 55%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 262 83% 58%;
-    --input: 217 33% 25%;
-    --ring: 262 83% 58%;
+    --border: 142 70% 45%;
+    --input: 210 25% 25%;
+    --ring: 348 83% 58%;
 
     --radius: 0.75rem;
 
-    --neon-purple: 262 83% 58%;
-    --neon-pink: 328 86% 70%;
-    --neon-blue: 199 89% 48%;
-    --dark-bg: 222 47% 11%;
-    --card-bg: 217 33% 17%;
+    --christmas-red: 348 83% 58%;
+    --christmas-green: 142 70% 45%;
+    --ice-blue: 198 88% 55%;
+    --snow-white: 0 0% 98%;
+    --gold: 45 100% 51%;
   }
 }
 
@@ -87,18 +87,67 @@
   }
 
   .neon-border {
-    border: 2px solid hsl(var(--primary));
+    border: 2px solid hsl(var(--christmas-green));
     box-shadow:
-      0 0 10px hsl(var(--primary)),
-      inset 0 0 10px hsl(var(--primary));
+      0 0 10px hsl(var(--christmas-green)),
+      inset 0 0 10px hsl(var(--christmas-green) / 0.3);
   }
 
   .gradient-bg {
     background: linear-gradient(
       135deg,
-      hsl(var(--primary)) 0%,
-      hsl(var(--secondary)) 50%,
-      hsl(var(--accent)) 100%
+      hsl(var(--christmas-red)) 0%,
+      hsl(var(--gold)) 50%,
+      hsl(var(--christmas-green)) 100%
     );
+  }
+
+  .snowflake {
+    position: fixed;
+    top: -10px;
+    color: white;
+    font-size: 1em;
+    pointer-events: none;
+    animation: fall linear infinite;
+    opacity: 0.8;
+    z-index: 9999;
+  }
+
+  @keyframes fall {
+    to {
+      transform: translateY(100vh) rotate(360deg);
+    }
+  }
+
+  .christmas-lights {
+    position: relative;
+  }
+
+  .christmas-lights::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(
+      90deg,
+      hsl(var(--christmas-red)) 0%,
+      hsl(var(--christmas-green)) 25%,
+      hsl(var(--gold)) 50%,
+      hsl(var(--accent)) 75%,
+      hsl(var(--christmas-red)) 100%
+    );
+    animation: lights 2s linear infinite;
+  }
+
+  @keyframes lights {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
   }
 }
